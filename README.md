@@ -55,6 +55,14 @@ preflight-dns \
 	-new new-example.us-east-1.elb.amazonaws.com
 ```
 
+### Docker example
+
+```bash
+docker run --rm robertlestak/preflight-dns \
+	-endpoint https://example.com \
+	-new new-example.us-east-1.elb.amazonaws.com
+```
+
 ### Example with headers and body
 
 ```bash
