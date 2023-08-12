@@ -3,12 +3,15 @@ package preflightdns
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"net"
 	"net/http"
+	"os"
 	"time"
 
 	log "github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v3"
 )
 
 type ConnectionState struct {
@@ -26,6 +29,28 @@ type PreflightDNS struct {
 
 	currentState ConnectionState
 	newState     ConnectionState
+}
+
+func LoadConfig(filepath string) (*PreflightDNS, error) {
+	l := log.WithFields(log.Fields{
+		"fn": "LoadConfig",
+	})
+	l.Debug("loading config")
+	var err error
+	pf := &PreflightDNS{}
+	bd, err := os.ReadFile(filepath)
+	if err != nil {
+		l.WithError(err).Error("error reading file")
+		return pf, err
+	}
+	if err := yaml.Unmarshal(bd, pf); err != nil {
+		// try with json
+		if err := json.Unmarshal(bd, pf); err != nil {
+			l.WithError(err).Error("error unmarshalling config")
+			return pf, err
+		}
+	}
+	return pf, err
 }
 
 func (d *PreflightDNS) Init() error {

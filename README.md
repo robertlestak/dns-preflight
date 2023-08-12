@@ -25,6 +25,8 @@ curl -sSL https://raw.githubusercontent.com/robertlestak/preflight-dns/main/scri
 Usage of preflight-dns:
   -body string
         body to send
+  -config string
+        config file to use
   -endpoint string
         endpoint to check
   -headers string
@@ -76,7 +78,26 @@ preflight-dns \
 	-lib
 ```
 
-### Server mode
+## Config file
+
+You can also use a config file to specify the endpoint to check.
+
+```yaml
+endpoint: https://example.com
+new: new-example.us-east-1.elb.amazonaws.com
+method: POST
+headers:
+  hello: world
+body: hello world
+timeout: 5s
+lowerIsBetter: true
+```
+
+```bash
+preflight-dns -config config.yaml
+```
+
+## Server mode
 
 When run in `server` mode, `preflight-dns` will listen on the specified address and port and respond to requests with the current connection state. This is useful for running as a service and calling as part of a CI/CD pipeline.
 
@@ -141,3 +162,4 @@ func main() {
 	}
 }
 ```
+

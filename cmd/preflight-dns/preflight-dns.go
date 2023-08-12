@@ -63,6 +63,7 @@ func main() {
 	serverAddr := preflightFlags.String("server-addr", ":8080", "server address to listen on")
 	timeout := preflightFlags.Duration("timeout", 5*time.Second, "timeout for requests")
 	lib := preflightFlags.Bool("lib", false, "lower is better. default is exact status code match.")
+	configFile := preflightFlags.String("config", "", "config file to use")
 	preflightFlags.Parse(os.Args[1:])
 	ll, err := log.ParseLevel(*logLevel)
 	if err != nil {
@@ -82,6 +83,12 @@ func main() {
 		for _, h := range strings.Split(*headers, ",") {
 			parts := strings.Split(h, "=")
 			pf.Headers[parts[0]] = parts[1]
+		}
+	}
+	if *configFile != "" {
+		if pf, err = preflightdns.LoadConfig(*configFile); err != nil {
+			l.WithError(err).Error("error loading config")
+			os.Exit(1)
 		}
 	}
 	if *serverMode {
