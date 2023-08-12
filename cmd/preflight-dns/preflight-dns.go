@@ -70,6 +70,7 @@ func main() {
 		ll = log.InfoLevel
 	}
 	log.SetLevel(ll)
+	preflightdns.Logger = l.Logger
 	pf := &preflightdns.PreflightDNS{
 		Endpoint:      *endpoint,
 		Method:        *method,

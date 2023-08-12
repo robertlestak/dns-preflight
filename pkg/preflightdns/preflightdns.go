@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net"
 	"net/http"
 	"os"
@@ -13,6 +14,18 @@ import (
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 )
+
+var (
+	Logger *log.Logger
+)
+
+func init() {
+	if Logger == nil {
+		Logger = log.New()
+		Logger.SetOutput(os.Stdout)
+		Logger.SetLevel(log.InfoLevel)
+	}
+}
 
 type ConnectionState struct {
 	StatusCode int
@@ -32,7 +45,7 @@ type PreflightDNS struct {
 }
 
 func LoadConfig(filepath string) (*PreflightDNS, error) {
-	l := log.WithFields(log.Fields{
+	l := Logger.WithFields(log.Fields{
 		"fn": "LoadConfig",
 	})
 	l.Debug("loading config")
@@ -54,7 +67,7 @@ func LoadConfig(filepath string) (*PreflightDNS, error) {
 }
 
 func (d *PreflightDNS) Init() error {
-	l := log.WithFields(log.Fields{
+	l := Logger.WithFields(log.Fields{
 		"fn": "Init",
 	})
 	l.Debug("initializing")
@@ -79,7 +92,7 @@ func (d *PreflightDNS) Init() error {
 }
 
 func (d *PreflightDNS) GetCurrent() (ConnectionState, error) {
-	l := log.WithFields(log.Fields{
+	l := Logger.WithFields(log.Fields{
 		"fn": "GetCurrent",
 	})
 	l.Debug("getting current state")
@@ -114,7 +127,7 @@ func (d *PreflightDNS) GetCurrent() (ConnectionState, error) {
 }
 
 func (d *PreflightDNS) GetNew() (ConnectionState, error) {
-	l := log.WithFields(log.Fields{
+	l := Logger.WithFields(log.Fields{
 		"fn": "GetNew",
 	})
 	l.Debug("getting new state")
@@ -171,7 +184,7 @@ func (d *PreflightDNS) GetNew() (ConnectionState, error) {
 }
 
 func (d *PreflightDNS) Compare() (bool, error) {
-	l := log.WithFields(log.Fields{
+	l := Logger.WithFields(log.Fields{
 		"fn": "Compare",
 	})
 	l.Debug("comparing current and new states")
@@ -189,8 +202,8 @@ func (d *PreflightDNS) Compare() (bool, error) {
 }
 
 func (d *PreflightDNS) Run() error {
-	l := log.WithFields(log.Fields{
-		"fn": "Run",
+	l := Logger.WithFields(log.Fields{
+		"preflight": "dns",
 	})
 	l.Debug("running")
 	err := d.Init()
@@ -214,10 +227,11 @@ func (d *PreflightDNS) Run() error {
 		return err
 	}
 	if !match {
-		l.Error("preflight failed")
-		return errors.New("preflight failed")
+		failstr := fmt.Sprintf("failed - expected: %d, got: %d", d.currentState.StatusCode, d.newState.StatusCode)
+		l.Error(failstr)
+		return errors.New(failstr)
 	}
-	l.Info("preflight passed")
+	l.Info("passed")
 	return err
 }
 
@@ -243,7 +257,7 @@ func ipForDomain(domain string) (string, error) {
 }
 
 func (d *PreflightDNS) resolveNew() error {
-	l := log.WithFields(log.Fields{
+	l := Logger.WithFields(log.Fields{
 		"fn": "resolveNew",
 	})
 	l.Debug("resolving new ip")
