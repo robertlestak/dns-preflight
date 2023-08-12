@@ -16,13 +16,13 @@ type ConnectionState struct {
 }
 
 type PreflightDNS struct {
-	Endpoint      string            `json:"endpoint"`
-	Headers       map[string]string `json:"headers"`
-	Body          string            `json:"body"`
-	Method        string            `json:"method"`
-	New           string            `json:"new"`
-	Timeout       time.Duration     `json:"timeout"`
-	LowerIsBetter bool              `json:"lower_is_better"`
+	Endpoint      string            `json:"endpoint" yaml:"endpoint"`
+	Headers       map[string]string `json:"headers" yaml:"headers"`
+	Body          string            `json:"body" yaml:"body"`
+	Method        string            `json:"method" yaml:"method"`
+	New           string            `json:"new" yaml:"new"`
+	Timeout       time.Duration     `json:"timeout" yaml:"timeout"`
+	LowerIsBetter bool              `json:"lowerIsBetter" yaml:"lowerIsBetter"`
 
 	currentState ConnectionState
 	newState     ConnectionState
