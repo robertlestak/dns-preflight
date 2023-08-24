@@ -201,6 +201,34 @@ func (d *PreflightDNS) Compare() (bool, error) {
 	return match, err
 }
 
+func (d *PreflightDNS) EquivalentCmd() {
+	l := Logger
+	l.Debug("printing equivalent command")
+	var cmd string
+	timeoutSeconds := int(d.Timeout.Seconds())
+
+	cmd = fmt.Sprintf(`ENDPOINT=%s; INPUT=%s; NEW_IP=""; if [[ $INPUT =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then NEW_IP=$INPUT; else NEW_IP=$(dig +short $INPUT | tail -n1); fi; `, d.Endpoint, d.New)
+	cmd += fmt.Sprintf(`if [[ $ENDPOINT =~ ^https:// ]]; then HOST=$(echo $ENDPOINT | sed -e "s,https://\([^/]*\).*,\1,"); else HOST=$(echo $ENDPOINT | sed -e "s,http://\([^/]*\).*,\1,"); fi;`)
+	cmd += fmt.Sprintf(`if [[ $HOST =~ :[0-9]+ ]]; then PORT=$(echo $HOST | sed -e "s,.*:\([0-9]*\).*,\1,"); HOST=$(echo $HOST | sed -e "s,:\([0-9]*\)\$,,"); fi;`)
+	cmd += fmt.Sprintf(`if [[ $ENDPOINT =~ :[0-9]+ ]]; then PORT=$(echo $ENDPOINT | sed -e "s,.*:\([0-9]*\).*,\1,"); else if [[ $ENDPOINT =~ ^https:// ]]; then PORT=443; else PORT=80; fi; fi;`)
+	cmd += `HEADER_STR=""; BODY_STR="";`
+	for k, v := range d.Headers {
+		cmd += fmt.Sprintf(`HEADER_STR="%s -H '%s: %s'"; `, cmd, k, v)
+	}
+	if d.Body != "" {
+		cmd += fmt.Sprintf(`BODY_STR="-d '%s'"; `, d.Body)
+	}
+	cmd += fmt.Sprintf(`ORIG=$(curl -s -o /dev/null -m %d -w "%%{http_code}" -X %s $HEADER_STR $BODY_STR $ENDPOINT); `, timeoutSeconds, d.Method)
+	cmd += fmt.Sprintf(`NEW=$(curl -s -o /dev/null -m %d -w "%%{http_code}" --resolve $HOST:$PORT:$NEW_IP "$ENDPOINT");`, timeoutSeconds)
+	if d.LowerIsBetter {
+		cmd += `if [[ $ORIG -gt $NEW ]]; then echo "passed"; else echo "failed" && exit 1; fi;`
+	} else {
+		cmd += `if [[ $ORIG -eq $NEW ]]; then echo "passed"; else echo "failed" && exit 1; fi;`
+	}
+	cmd = fmt.Sprintf(`sh -c '%s'`, cmd)
+	l.Infof("equivalent command: %s", cmd)
+}
+
 func (d *PreflightDNS) Run() error {
 	l := Logger.WithFields(log.Fields{
 		"preflight": "dns",
@@ -211,6 +239,7 @@ func (d *PreflightDNS) Run() error {
 		l.WithError(err).Error("error initializing")
 		return err
 	}
+	d.EquivalentCmd()
 	_, err = d.GetCurrent()
 	if err != nil {
 		l.WithError(err).Error("error getting current state")
