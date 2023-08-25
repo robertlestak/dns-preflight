@@ -64,6 +64,7 @@ func main() {
 	timeout := preflightFlags.Duration("timeout", 5*time.Second, "timeout for requests")
 	lib := preflightFlags.Bool("lib", false, "lower is better. default is exact status code match.")
 	configFile := preflightFlags.String("config", "", "config file to use")
+	equiv := preflightFlags.Bool("equiv", false, "print sh equivalent command")
 	preflightFlags.Parse(os.Args[1:])
 	ll, err := log.ParseLevel(*logLevel)
 	if err != nil {
@@ -78,6 +79,7 @@ func main() {
 		New:           *new,
 		LowerIsBetter: *lib,
 		Timeout:       *timeout,
+		Equiv:         *equiv,
 	}
 	if *headers != "" {
 		pf.Headers = make(map[string]string)
