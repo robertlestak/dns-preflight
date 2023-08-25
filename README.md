@@ -29,6 +29,8 @@ Usage of preflight-dns:
         config file to use
   -endpoint string
         endpoint to check
+  -equiv
+        print sh equivalent command
   -headers string
         headers to send. comma separated list of key=value
   -lib
